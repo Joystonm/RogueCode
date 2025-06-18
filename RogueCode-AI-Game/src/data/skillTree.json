@@ -1,0 +1,52 @@
+{
+  "categories": [
+    {
+      "id": "hacking",
+      "name": "Hacking",
+      "skills": [
+        {
+          "id": "basic_terminal",
+          "name": "Basic Terminal",
+          "level": 1,
+          "description": "Basic terminal commands and navigation",
+          "unlocks": ["password_cracking"]
+        },
+        {
+          "id": "password_cracking",
+          "name": "Password Cracking",
+          "level": 2,
+          "description": "Ability to crack simple passwords",
+          "requires": ["basic_terminal"],
+          "unlocks": ["network_infiltration"]
+        },
+        {
+          "id": "network_infiltration",
+          "name": "Network Infiltration",
+          "level": 3,
+          "description": "Skills to infiltrate basic networks",
+          "requires": ["password_cracking"]
+        }
+      ]
+    },
+    {
+      "id": "coding",
+      "name": "Coding",
+      "skills": [
+        {
+          "id": "basic_scripting",
+          "name": "Basic Scripting",
+          "level": 1,
+          "description": "Write simple automation scripts",
+          "unlocks": ["data_parsing"]
+        },
+        {
+          "id": "data_parsing",
+          "name": "Data Parsing",
+          "level": 2,
+          "description": "Extract and manipulate data from files",
+          "requires": ["basic_scripting"]
+        }
+      ]
+    }
+  ]
+}
