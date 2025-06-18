@@ -5,8 +5,10 @@ import MissionPopup from './components/Popups/MissionPopup';
 import AlertBox from './components/Popups/AlertBox';
 import SkillTree from './components/Popups/SkillTree';
 import Inventory from './components/Popups/Inventory';
+import HelpPanel from './components/HelpPanel';
 import { GameProvider, useGameContext } from './context/GameContext';
 import soundManager from './utils/soundManager';
+import { memoryService } from './services';
 import { gsap } from 'gsap';
 import './styles/App.css';
 import './styles/animations.css';
@@ -17,23 +19,51 @@ function App() {
   
   // Initialize game
   useEffect(() => {
+    // Initialize memory service
+    try {
+      const loaded = memoryService.loadFromLocalStorage();
+      if (!loaded) {
+        memoryService.initializeMemory();
+      }
+      console.log("Memory service initialized");
+    } catch (error) {
+      console.error("Failed to initialize memory service:", error);
+      memoryService.initializeMemory(); // Initialize with defaults
+    }
+    
     // Initialize sound manager
-    soundManager.init();
-    
-    // Simulate loading time
-    const loadingTimer = setTimeout(() => {
+    try {
+      soundManager.init();
+      console.log("Sound manager initialized successfully");
+      
+      // Simulate loading time
+      const loadingTimer = setTimeout(() => {
+        setIsLoading(false);
+        
+        // Play ambient music when loading completes
+        try {
+          soundManager.playMusic('ambient');
+          console.log("Started playing ambient music");
+        } catch (error) {
+          console.error("Failed to play ambient music:", error);
+        }
+      }, 2000);
+      
+      return () => {
+        clearTimeout(loadingTimer);
+        
+        // Stop all sounds when component unmounts
+        try {
+          soundManager.stopMusic();
+          console.log("Stopped all music");
+        } catch (error) {
+          console.error("Failed to stop music:", error);
+        }
+      };
+    } catch (error) {
+      console.error("Failed to initialize sound manager:", error);
       setIsLoading(false);
-      
-      // Play ambient music when loading completes
-      soundManager.playMusic('ambient');
-    }, 2000);
-    
-    return () => {
-      clearTimeout(loadingTimer);
-      
-      // Stop all sounds when component unmounts
-      soundManager.stopMusic();
-    };
+    }
   }, []);
 
   return (
@@ -122,14 +152,14 @@ const LoadingScreen = () => {
 
 // Main game screen component
 const GameScreen = () => {
-  const { uiState } = useGameContext();
+  const { uiState, toggleHelpPanel } = useGameContext();
   
   // Sample mission for demonstration
   const sampleMission = {
     id: 'mission-1',
     title: 'Corporate Infiltration',
     type: 'INFILTRATION',
-    description: 'Gain access to MegaCorp's internal network and locate sensitive financial documents. Their security system has been recently upgraded, so proceed with caution.',
+    description: "Gain access to MegaCorp's internal network and locate sensitive financial documents. Their security system has been recently upgraded, so proceed with caution.",
     objective: 'Download quarterly financial reports',
     target: 'MegaCorp HQ',
     difficulty: 3,
@@ -137,6 +167,19 @@ const GameScreen = () => {
     creditReward: 1000,
     reputationReward: 5
   };
+  
+  // Add keyboard shortcut for help (F1 or H key)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'F1' || (e.key === 'h' && e.ctrlKey)) {
+        e.preventDefault();
+        toggleHelpPanel();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleHelpPanel]);
 
   return (
     <div className="app">
@@ -144,7 +187,7 @@ const GameScreen = () => {
         <div className="app-title">RogueCode: AI Hacker Adventure</div>
         <div className="app-controls">
           <button className="control-button">Settings</button>
-          <button className="control-button">Help</button>
+          <button className="control-button" onClick={toggleHelpPanel} title="Help (F1 or Ctrl+H)">Help</button>
         </div>
       </header>
       
@@ -183,6 +226,11 @@ const GameScreen = () => {
         <div className="popup-overlay">
           <Inventory />
         </div>
+      )}
+      
+      {/* Help Panel */}
+      {uiState.showHelpPanel && (
+        <HelpPanel onClose={toggleHelpPanel} />
       )}
     </div>
   );

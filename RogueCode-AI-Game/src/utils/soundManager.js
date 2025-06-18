@@ -18,32 +18,35 @@ class SoundManager {
    * Initialize all game sounds
    */
   init() {
-    // UI sounds
-    this.loadSound('typewriter', '/sounds/typewriter.mp3', { volume: 0.3, pool: 5 });
-    this.loadSound('error', '/sounds/error.wav', { volume: 0.5 });
-    this.loadSound('success', '/sounds/success.wav', { volume: 0.5 });
-    this.loadSound('alert', '/sounds/alert.wav', { volume: 0.6 });
-    this.loadSound('warning', '/sounds/warning.wav', { volume: 0.6 });
-    this.loadSound('glitch', '/sounds/glitch.mp3', { volume: 0.5 });
+    // Only load the music.mp3 file that exists
+    this.loadMusic('ambient', '/sounds/music.mp3', { volume: this.musicVolume, loop: true });
     
-    // UI interaction sounds
-    this.loadSound('uiOpen', '/sounds/ui_open.wav', { volume: 0.4 });
-    this.loadSound('uiClose', '/sounds/ui_close.wav', { volume: 0.4 });
-    this.loadSound('uiToggle', '/sounds/ui_toggle.wav', { volume: 0.4 });
-    this.loadSound('uiHover', '/sounds/ui_hover.wav', { volume: 0.2 });
-    this.loadSound('uiClick', '/sounds/ui_click.wav', { volume: 0.4 });
+    // Create dummy sound objects with all necessary methods
+    const createDummySound = () => ({
+      play: () => -1,
+      stop: () => {},
+      volume: () => {},
+      mute: () => {},
+      fade: () => {},
+      loop: () => {},
+      rate: () => {},
+      on: () => {},
+      once: () => {}
+    });
     
-    // Game event sounds
-    this.loadSound('levelUp', '/sounds/level_up.wav', { volume: 0.7 });
-    this.loadSound('unlock', '/sounds/unlock.wav', { volume: 0.6 });
-    this.loadSound('missionAccept', '/sounds/mission_accept.wav', { volume: 0.6 });
-    this.loadSound('missionComplete', '/sounds/mission_complete.wav', { volume: 0.7 });
-    this.loadSound('itemUse', '/sounds/item_use.wav', { volume: 0.5 });
+    // Create dummy sound objects for all sound effects
+    const soundNames = [
+      'typewriter', 'error', 'success', 'alert', 'warning', 'glitch',
+      'uiOpen', 'uiClose', 'uiToggle', 'uiHover', 'uiClick',
+      'levelUp', 'unlock', 'missionAccept', 'missionComplete', 'itemUse'
+    ];
     
-    // Ambient music
-    this.loadMusic('ambient', '/assets/audio/ambient.mp3', { volume: this.musicVolume, loop: true });
-    this.loadMusic('hacking', '/assets/audio/hacking.mp3', { volume: this.musicVolume, loop: true });
-    this.loadMusic('mission', '/assets/audio/mission.mp3', { volume: this.musicVolume, loop: true });
+    this.sounds = {};
+    soundNames.forEach(name => {
+      this.sounds[name] = createDummySound();
+    });
+    
+    console.log('Sound manager initialized with music only');
   }
 
   /**
@@ -114,20 +117,28 @@ class SoundManager {
     // Get the sound
     const sound = this.sounds[id];
     
-    // Set volume
-    if (options.volume) {
-      sound.volume(options.volume);
-    } else {
-      sound.volume(this.volume);
+    // Set volume if the method exists
+    try {
+      if (options.volume && typeof sound.volume === 'function') {
+        sound.volume(options.volume);
+      } else if (typeof sound.volume === 'function') {
+        sound.volume(this.volume);
+      }
+    } catch (error) {
+      console.log(`Could not set volume for sound ${id}:`, error);
     }
     
     // Play the sound
     try {
       const soundId = sound.play();
       
-      // Apply options
-      if (options.loop) sound.loop(options.loop, soundId);
-      if (options.rate) sound.rate(options.rate, soundId);
+      // Apply options if methods exist
+      try {
+        if (options.loop && typeof sound.loop === 'function') sound.loop(options.loop, soundId);
+        if (options.rate && typeof sound.rate === 'function') sound.rate(options.rate, soundId);
+      } catch (optionError) {
+        console.log(`Could not apply options to sound ${id}:`, optionError);
+      }
       
       return soundId;
     } catch (err) {
@@ -146,18 +157,24 @@ class SoundManager {
     if (this.isMusicMuted || !this.music[id]) return -1;
     
     // Stop current music if playing
-    if (this.currentMusic && this.music[this.currentMusic].playing()) {
+    if (this.currentMusic && this.music[this.currentMusic] && 
+        typeof this.music[this.currentMusic].playing === 'function' && 
+        this.music[this.currentMusic].playing()) {
       this.stopMusic();
     }
     
     // Get the music
     const music = this.music[id];
     
-    // Set volume
-    if (options.volume) {
-      music.volume(options.volume);
-    } else {
-      music.volume(this.musicVolume);
+    // Set volume if the method exists
+    try {
+      if (options.volume && typeof music.volume === 'function') {
+        music.volume(options.volume);
+      } else if (typeof music.volume === 'function') {
+        music.volume(this.musicVolume);
+      }
+    } catch (error) {
+      console.log(`Could not set volume for music ${id}:`, error);
     }
     
     // Play the music
@@ -165,9 +182,17 @@ class SoundManager {
       const musicId = music.play();
       this.currentMusic = id;
       
-      // Apply options
-      if (options.loop !== undefined) music.loop(options.loop, musicId);
-      if (options.rate) music.rate(options.rate, musicId);
+      // Apply options if methods exist
+      try {
+        if (options.loop !== undefined && typeof music.loop === 'function') {
+          music.loop(options.loop, musicId);
+        }
+        if (options.rate && typeof music.rate === 'function') {
+          music.rate(options.rate, musicId);
+        }
+      } catch (optionError) {
+        console.log(`Could not apply options to music ${id}:`, optionError);
+      }
       
       return musicId;
     } catch (err) {
@@ -183,7 +208,13 @@ class SoundManager {
    */
   stopSound(id) {
     if (!this.sounds[id]) return;
-    this.sounds[id].stop();
+    try {
+      if (typeof this.sounds[id].stop === 'function') {
+        this.sounds[id].stop();
+      }
+    } catch (error) {
+      console.log(`Could not stop sound ${id}:`, error);
+    }
   }
 
   /**
@@ -192,8 +223,15 @@ class SoundManager {
    */
   stopMusic() {
     if (this.currentMusic && this.music[this.currentMusic]) {
-      this.music[this.currentMusic].stop();
-      this.currentMusic = null;
+      try {
+        if (typeof this.music[this.currentMusic].stop === 'function') {
+          this.music[this.currentMusic].stop();
+        }
+        this.currentMusic = null;
+      } catch (error) {
+        console.log('Could not stop music:', error);
+        this.currentMusic = null;
+      }
     }
   }
 
@@ -204,16 +242,27 @@ class SoundManager {
    */
   fadeOutMusic(duration = 1000) {
     if (this.currentMusic && this.music[this.currentMusic]) {
-      const music = this.music[this.currentMusic];
-      const currentVolume = music.volume();
-      
-      music.fade(currentVolume, 0, duration);
-      
-      music.once('fade', () => {
-        music.stop();
-        music.volume(currentVolume);
-        this.currentMusic = null;
-      });
+      try {
+        const music = this.music[this.currentMusic];
+        
+        if (typeof music.volume !== 'function' || typeof music.fade !== 'function') {
+          this.stopMusic();
+          return;
+        }
+        
+        const currentVolume = music.volume();
+        
+        music.fade(currentVolume, 0, duration);
+        
+        music.once('fade', () => {
+          music.stop();
+          music.volume(currentVolume);
+          this.currentMusic = null;
+        });
+      } catch (error) {
+        console.log('Could not fade out music:', error);
+        this.stopMusic();
+      }
     }
   }
 
@@ -226,27 +275,51 @@ class SoundManager {
   crossfadeMusic(id, duration = 1000) {
     if (!this.music[id]) return;
     
-    // If music is already playing, fade it out
-    if (this.currentMusic && this.music[this.currentMusic].playing()) {
-      const currentMusic = this.music[this.currentMusic];
-      const currentVolume = currentMusic.volume();
+    try {
+      // If music is already playing, fade it out
+      if (this.currentMusic && this.music[this.currentMusic] && 
+          typeof this.music[this.currentMusic].playing === 'function' && 
+          this.music[this.currentMusic].playing()) {
+        
+        const currentMusic = this.music[this.currentMusic];
+        
+        if (typeof currentMusic.volume === 'function' && typeof currentMusic.fade === 'function') {
+          const currentVolume = currentMusic.volume();
+          
+          // Fade out current music
+          currentMusic.fade(currentVolume, 0, duration);
+          
+          currentMusic.once('fade', () => {
+            currentMusic.stop();
+            if (typeof currentMusic.volume === 'function') {
+              currentMusic.volume(currentVolume);
+            }
+          });
+        } else {
+          // If fade methods don't exist, just stop the current music
+          this.stopMusic();
+        }
+      }
       
-      // Fade out current music
-      currentMusic.fade(currentVolume, 0, duration);
+      // Start new music at volume 0 and fade in
+      const newMusic = this.music[id];
       
-      currentMusic.once('fade', () => {
-        currentMusic.stop();
-        currentMusic.volume(currentVolume);
-      });
+      if (typeof newMusic.volume === 'function' && typeof newMusic.fade === 'function') {
+        newMusic.volume(0);
+        const newMusicId = newMusic.play();
+        newMusic.fade(0, this.musicVolume, duration, newMusicId);
+      } else {
+        // If fade methods don't exist, just play at normal volume
+        newMusic.play();
+      }
+      
+      this.currentMusic = id;
+    } catch (error) {
+      console.log('Error during crossfade:', error);
+      // Fallback: stop current music and play new music
+      this.stopMusic();
+      this.playMusic(id);
     }
-    
-    // Start new music at volume 0 and fade in
-    const newMusic = this.music[id];
-    newMusic.volume(0);
-    const newMusicId = newMusic.play();
-    newMusic.fade(0, this.musicVolume, duration, newMusicId);
-    
-    this.currentMusic = id;
   }
 
   /**
@@ -257,9 +330,11 @@ class SoundManager {
   setVolume(level) {
     this.volume = Math.max(0, Math.min(1, level));
     
-    // Update volume for all sounds
+    // Update volume for all sounds that have a volume method
     Object.values(this.sounds).forEach(sound => {
-      sound.volume(this.volume);
+      if (sound && typeof sound.volume === 'function') {
+        sound.volume(this.volume);
+      }
     });
   }
 
@@ -271,9 +346,11 @@ class SoundManager {
   setMusicVolume(level) {
     this.musicVolume = Math.max(0, Math.min(1, level));
     
-    // Update volume for all music
+    // Update volume for all music that have a volume method
     Object.values(this.music).forEach(music => {
-      music.volume(this.musicVolume);
+      if (music && typeof music.volume === 'function') {
+        music.volume(this.musicVolume);
+      }
     });
   }
 
@@ -299,7 +376,9 @@ class SoundManager {
     
     // Mute/unmute all music
     Object.values(this.music).forEach(music => {
-      music.mute(this.isMusicMuted);
+      if (music && typeof music.mute === 'function') {
+        music.mute(this.isMusicMuted);
+      }
     });
     
     return this.isMusicMuted;

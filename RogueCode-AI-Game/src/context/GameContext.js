@@ -54,6 +54,7 @@ export const GameProvider = ({ children }) => {
     showInventory: false,
     showMissionPopup: false,
     showAlertBox: false,
+    showHelpPanel: false,
     alertMessage: '',
     alertType: 'info',
   });
@@ -89,6 +90,14 @@ export const GameProvider = ({ children }) => {
     return newOutput.id;
   };
 
+  // Set terminal processing state
+  const setTerminalProcessing = (isProcessing) => {
+    setTerminalState(prev => ({
+      ...prev,
+      isProcessing
+    }));
+  };
+
   // Clear terminal
   const clearTerminal = () => {
     setTerminalState(prev => ({
@@ -116,7 +125,7 @@ export const GameProvider = ({ children }) => {
         setUiState(prev => ({
           ...prev,
           showAlertBox: true,
-          alertMessage: \`Level Up! You are now level \${newLevel}\`,
+          alertMessage: `Level Up! You are now level ${newLevel}`,
           alertType: 'success',
         }));
         
@@ -149,7 +158,7 @@ export const GameProvider = ({ children }) => {
     setUiState(prev => ({
       ...prev,
       showAlertBox: true,
-      alertMessage: \`New skill unlocked: \${skill.name}\`,
+      alertMessage: `New skill unlocked: ${skill.name}`,
       alertType: 'success',
     }));
   };
@@ -162,7 +171,7 @@ export const GameProvider = ({ children }) => {
       activeMissions: [...prev.activeMissions, mission],
       missionLog: [...prev.missionLog, { 
         timestamp: new Date().toISOString(),
-        event: \`Mission accepted: \${mission.title}\`,
+        event: `Mission accepted: ${mission.title}`,
       }],
     }));
     
@@ -176,9 +185,9 @@ export const GameProvider = ({ children }) => {
     }));
     
     // Add mission start message to terminal
-    addTerminalOutput(\`Mission accepted: \${mission.title}\`, 'success');
+    addTerminalOutput(`Mission accepted: ${mission.title}`, 'success');
     addTerminalOutput(mission.description, 'info');
-    addTerminalOutput(\`Objective: \${mission.objective}\`, 'info');
+    addTerminalOutput(`Objective: ${mission.objective}`, 'info');
   };
 
   // Complete a mission
@@ -197,7 +206,7 @@ export const GameProvider = ({ children }) => {
         completedMissions: [...prev.completedMissions, mission],
         missionLog: [...prev.missionLog, { 
           timestamp: new Date().toISOString(),
-          event: \`Mission completed: \${mission.title}\`,
+          event: `Mission completed: ${mission.title}`,
         }],
       };
     });
@@ -219,13 +228,13 @@ export const GameProvider = ({ children }) => {
     setUiState(prev => ({
       ...prev,
       showAlertBox: true,
-      alertMessage: \`Mission Complete! Rewards: \${mission.xpReward} XP, \${mission.creditReward} credits\`,
+      alertMessage: `Mission Complete! Rewards: ${mission.xpReward} XP, ${mission.creditReward} credits`,
       alertType: 'success',
     }));
     
     // Add mission complete message to terminal
-    addTerminalOutput(\`Mission complete: \${mission.title}\`, 'success');
-    addTerminalOutput(\`Rewards: \${mission.xpReward} XP, \${mission.creditReward} credits\`, 'success');
+    addTerminalOutput(`Mission complete: ${mission.title}`, 'success');
+    addTerminalOutput(`Rewards: ${mission.xpReward} XP, ${mission.creditReward} credits`, 'success');
   };
 
   // Toggle UI elements
@@ -255,6 +264,16 @@ export const GameProvider = ({ children }) => {
       ...prev,
       showAlertBox: false,
     }));
+  };
+  
+  const toggleHelpPanel = () => {
+    setUiState(prev => ({
+      ...prev,
+      showHelpPanel: !prev.showHelpPanel,
+    }));
+    
+    // Play UI toggle sound
+    soundManager.playSound('uiToggle');
   };
 
   // Update game settings
@@ -337,12 +356,14 @@ export const GameProvider = ({ children }) => {
       addTerminalCommand,
       addTerminalOutput,
       clearTerminal,
+      setTerminalProcessing,
       addXP,
       addSkill,
       startMission,
       completeMission,
       toggleSkillTree,
       toggleInventory,
+      toggleHelpPanel,
       closeAlertBox,
       updateGameSettings,
     }}>

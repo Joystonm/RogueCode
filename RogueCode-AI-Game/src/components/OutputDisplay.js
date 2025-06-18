@@ -40,7 +40,7 @@ const OutputLine = ({ line, typingSpeed, glitchIntensity }) => {
   );
   
   // Apply glitch effect for error messages or when specified
-  const shouldGlitch = line.type === 'error' || line.type === 'glitch';
+  const shouldGlitch = line.type === 'glitch'; // Removed error type to prevent glitching error messages
   const glitchedText = shouldGlitch && glitchIntensity > 0 
     ? applyGlitchEffect(displayedText, glitchIntensity)
     : displayedText;
@@ -53,15 +53,20 @@ const OutputLine = ({ line, typingSpeed, glitchIntensity }) => {
   // Special formatting for ASCII art
   if (line.type === 'ascii') {
     return (
-      <pre className={`output-line ${line.type}`}>
+      <pre className={`output-line ${line.type} selectable`}>
         {displayedText}
       </pre>
     );
   }
   
   return (
-    <div className={`output-line ${line.type}`}>
-      {glitchedText}
+    <div className={`output-line ${line.type} selectable`}>
+      {glitchedText.split('\n').map((text, i) => (
+        <React.Fragment key={i}>
+          {text}
+          {i < glitchedText.split('\n').length - 1 && <br />}
+        </React.Fragment>
+      ))}
       {!isComplete && shouldAnimate && <span className="cursor"></span>}
     </div>
   );
@@ -84,7 +89,7 @@ const LoadingBar = ({ line }) => {
   const emptyBlocks = totalBlocks - filledBlocks;
   
   return (
-    <div className={`output-line ${line.type} loading-bar`}>
+    <div className={`output-line ${line.type} loading-bar selectable`}>
       {beforeText}
       <span className="loading-bar-container">
         <span className="loading-bar-filled" style={{ width: `${percent}%` }}></span>

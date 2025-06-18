@@ -1,0 +1,48 @@
+import { v4 as uuidv4 } from 'uuid';
+import { applyGlitchEffect } from './glitchText';
+import soundManager from './soundManager';
+import groqService from '../services/groqService';
+import tavilyService from '../services/tavilyService';
+import randomUserService from '../services/randomUserService';
+import uuidService from '../services/uuidService';
+import memoryService from '../services/memoryService';
+
+/**
+ * Parse and process user commands
+ * @param {string} input - The command input from the user
+ * @returns {object} The parsed command with action and arguments
+ */
+const parseCommand = (input) => {
+  if (!input || input.trim() === '') {
+    return { action: null, args: [], flags: {} };
+  }
+
+  try {
+    const parts = input.trim().split(' ');
+    const action = parts[0].toLowerCase();
+    const args = parts.slice(1);
+    
+    // Parse flags (e.g. --verbose, -v)
+    const flags = {};
+    const cleanArgs = [];
+    
+    args.forEach(arg => {
+      if (arg.startsWith('--')) {
+        // Long flag (--flag)
+        const flagName = arg.slice(2);
+        flags[flagName] = true;
+      } else if (arg.startsWith('-') && arg.length > 1) {
+        // Short flag (-f)
+        const flagName = arg.slice(1);
+        flags[flagName] = true;
+      } else {
+        cleanArgs.push(arg);
+      }
+    });
+
+    return { action, args: cleanArgs, flags };
+  } catch (error) {
+    console.error('Error parsing command:', error);
+    return { action: input.trim().split(' ')[0].toLowerCase(), args: [], flags: {} };
+  }
+};

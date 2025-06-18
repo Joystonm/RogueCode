@@ -13,7 +13,9 @@ const CommandInput = () => {
     addTerminalCommand, 
     addTerminalOutput, 
     terminalState,
-    gameSettings
+    setTerminalProcessing,
+    gameSettings,
+    toggleHelpPanel
   } = useGameContext();
 
   // Focus input on mount and when terminal is clicked
@@ -37,6 +39,8 @@ const CommandInput = () => {
     
     if (!command.trim()) return;
     
+    console.log('Command submitted:', command);
+    
     // Add command to terminal output
     addTerminalCommand(command);
     
@@ -47,30 +51,52 @@ const CommandInput = () => {
     
     // Parse and process command
     const parsedCommand = parseCommand(command);
+    console.log('Parsed command:', parsedCommand);
+    
+    // Set terminal to processing state
+    setTerminalProcessing(true);
     
     // Process command with delay for realistic effect
     setTimeout(async () => {
       try {
+        console.log('Processing command:', parsedCommand.action);
         const response = await processCommand(parsedCommand);
+        console.log('Command response:', response);
         
         // Handle special commands
         if (response.action === 'CLEAR_TERMINAL') {
           // Clear terminal handled by context
+        } else if (response.action === 'OPEN_HELP_PANEL') {
+          // Open help panel
+          toggleHelpPanel();
+          // Add response to terminal
+          addTerminalOutput(response.text, response.type);
         } else {
           // Add response to terminal
           addTerminalOutput(response.text, response.type);
           
-          // Play sound based on response type
-          if (response.type === 'error') {
-            soundManager.playSound('error');
-          } else if (response.type === 'success') {
-            soundManager.playSound('success');
+          // Try to play sound based on response type
+          try {
+            if (response.type === 'error') {
+              soundManager.playSound('error');
+            } else if (response.type === 'success') {
+              soundManager.playSound('success');
+            }
+          } catch (error) {
+            console.log("Sound effect not available");
           }
         }
       } catch (error) {
         console.error('Error processing command:', error);
         addTerminalOutput(`Error: ${error.message}`, 'error');
-        soundManager.playSound('error');
+        try {
+          soundManager.playSound('error');
+        } catch (soundError) {
+          console.log("Sound effect not available");
+        }
+      } finally {
+        // Set terminal back to ready state
+        setTerminalProcessing(false);
       }
     }, 300); // Slight delay for realism
     
@@ -80,9 +106,13 @@ const CommandInput = () => {
 
   // Handle keyboard navigation through command history
   const handleKeyDown = (e) => {
-    // Play typing sound
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') {
-      soundManager.playSound('typewriter');
+    // Try to play typing sound, but don't worry if it fails
+    try {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') {
+        soundManager.playSound('typewriter');
+      }
+    } catch (error) {
+      console.log("Sound not available");
     }
     
     if (e.key === 'ArrowUp') {
