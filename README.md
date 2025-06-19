@@ -2,8 +2,6 @@
 
 An immersive cyberpunk hacking simulation game built with React.js and AI integration.
 
-![RogueCode Screenshot](screenshot.png)
-
 ## Project Overview
 
 RogueCode is an interactive terminal-based game that simulates the experience of being a rogue hacker in a dystopian cyberpunk future. Players complete missions, solve puzzles, and advance through a skill tree while interacting with an AI-powered game environment.
@@ -299,24 +297,6 @@ Customize your audio experience:
 - Adjust volume levels
 - Toggle ambient background music
 
-## Development Roadmap
-
-- [x] Core terminal interface
-- [x] Command parsing system
-- [x] Visual effects and animations
-- [x] Sound integration
-- [x] Mission generation
-- [x] Skill tree implementation
-- [x] Advanced payload system
-- [x] Target-specific hacking mechanics
-- [x] Comprehensive help system
-- [x] Copy-paste functionality
-- [ ] Full mission gameplay loop
-- [ ] Storyline progression
-- [ ] Achievement system
-- [ ] Network visualization
-- [ ] Multiplayer features
-
 ## Keyboard Shortcuts
 
 | Shortcut      | Action                               |
@@ -331,13 +311,3 @@ Customize your audio experience:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-[MIT License](LICENSE)
-
-## Acknowledgments
-
-- Inspired by classic hacking games and cyberpunk fiction
-- Built with modern web technologies and AI integration
-- Powered by Groq API for dynamic AI responses
