@@ -41,7 +41,7 @@ export const GameProvider = ({ children }) => {
   // Game settings
   const [gameSettings, setGameSettings] = useState({
     soundEnabled: true,
-    musicEnabled: true,
+    musicEnabled: false,  // Music disabled by default
     volume: 0.7,
     terminalTheme: 'green', // green, amber, blue
     typingSpeed: 50,
@@ -109,6 +109,14 @@ export const GameProvider = ({ children }) => {
     }));
   };
 
+  // Update player state directly
+  const updatePlayerState = (newPlayerState) => {
+    setPlayerState(prev => ({
+      ...prev,
+      ...newPlayerState
+    }));
+  };
+  
   // Add XP to player
   const addXP = (amount) => {
     setPlayerState(prev => {
@@ -357,6 +365,11 @@ export const GameProvider = ({ children }) => {
     if (!gameSettings.soundEnabled) {
       soundManager.toggleMute();
     }
+    
+    // Ensure music is muted if musicEnabled is false
+    if (!gameSettings.musicEnabled) {
+      soundManager.toggleMusicMute();
+    }
   }, []);
 
   // Save game when state changes
@@ -391,6 +404,7 @@ export const GameProvider = ({ children }) => {
       toggleSettingsPanel,
       closeAlertBox,
       updateGameSettings,
+      updatePlayerState,
     }}>
       {children}
     </GameContext.Provider>

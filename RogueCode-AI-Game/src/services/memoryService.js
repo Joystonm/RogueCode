@@ -7,7 +7,8 @@ const gameMemory = {
   player: {
     level: 1,
     xp: 0,
-    credits: 1000,
+    xpToNextLevel: 100,
+    credits: 500,  // Changed from 1000 to 500 to match your starting value
     reputation: 0,
     skills: {},
     inventory: [],
@@ -93,20 +94,39 @@ export const updatePlayerData = (updates) => {
 export const addPlayerXP = (amount) => {
   const player = gameMemory.player;
   const oldLevel = player.level;
+  const oldXp = player.xp;
+  const oldXpToNextLevel = player.xpToNextLevel;
   
+  // Ensure xpToNextLevel exists
+  if (!player.xpToNextLevel) {
+    player.xpToNextLevel = 100;
+  }
+  
+  // Add XP
   player.xp += amount;
+  console.log(`[XP] Added ${amount} XP. Before: ${oldXp}/${oldXpToNextLevel}, After: ${player.xp}/${player.xpToNextLevel}`);
   
-  // Check for level up (simple formula: level = 1 + floor(xp/1000))
-  player.level = 1 + Math.floor(player.xp / 1000);
+  // Check for level up based on xpToNextLevel
+  let levelsGained = 0;
+  while (player.xp >= player.xpToNextLevel) {
+    player.level += 1;
+    levelsGained += 1;
+    player.xp -= player.xpToNextLevel;
+    player.xpToNextLevel = Math.floor(player.xpToNextLevel * 1.5); // Increase XP needed for next level
+    console.log(`[XP] Level up! New level: ${player.level}, XP: ${player.xp}/${player.xpToNextLevel}`);
+  }
   
-  const leveledUp = player.level > oldLevel;
+  const leveledUp = levelsGained > 0;
   
+  // Save changes
   saveToLocalStorage();
   
   return {
     ...player,
+    oldXp,
+    oldXpToNextLevel,
     leveledUp,
-    levelsGained: leveledUp ? player.level - oldLevel : 0
+    levelsGained
   };
 };
 
@@ -310,7 +330,8 @@ export const resetMemory = () => {
   gameMemory.player = {
     level: 1,
     xp: 0,
-    credits: 1000,
+    xpToNextLevel: 100,
+    credits: 500,  // Changed from 1000 to 500 to match your starting value
     reputation: 0,
     skills: {},
     inventory: [],
@@ -318,6 +339,13 @@ export const resetMemory = () => {
   };
   
   gameMemory.gameState = 'idle';
+  gameMemory.missions = [];
+  gameMemory.targets = {};
+  gameMemory.viruses = {};
+  gameMemory.exploits = {};
+  gameMemory.currentSystem = null;
+  
+  console.log('Game memory reset to default values:', gameMemory);
   
   saveToLocalStorage();
 };

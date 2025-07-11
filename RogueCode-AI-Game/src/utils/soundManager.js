@@ -21,6 +21,9 @@ class SoundManager {
     // Only load the music.mp3 file that exists
     this.loadMusic('ambient', '/sounds/music.mp3', { volume: this.musicVolume, loop: true });
     
+    // Set music to muted by default
+    this.isMusicMuted = true;
+    
     // Create dummy sound objects with all necessary methods
     const createDummySound = () => ({
       play: () => -1,

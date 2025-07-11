@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameContext } from '../context/GameContext';
 import { parseCommand, processCommand } from '../utils/commandParser';
 import soundManager from '../utils/soundManager';
+import memoryService from '../services/memoryService';
 
 const CommandInput = () => {
   const [command, setCommand] = useState('');
@@ -16,7 +17,8 @@ const CommandInput = () => {
     setTerminalProcessing,
     gameSettings,
     toggleHelpPanel,
-    toggleSettingsPanel
+    toggleSettingsPanel,
+    updatePlayerState
   } = useGameContext();
 
   // Focus input on mount and when terminal is clicked
@@ -77,6 +79,22 @@ const CommandInput = () => {
           toggleSettingsPanel();
           // Add response to terminal
           addTerminalOutput(response.text, response.type);
+        } else if (response.action === 'HACK_SUCCESS' || response.action === 'FIX_STATS' || response.action === 'RESET_STATS' || response.action === 'RESET_ALL') {
+          // Add response to terminal
+          addTerminalOutput(response.text, response.type);
+          
+          // Sync player state from memory service after successful hack, fix, or reset
+          const playerData = memoryService.getPlayerData();
+          if (playerData) {
+            updatePlayerState(playerData);
+          }
+          
+          // Play success sound
+          try {
+            soundManager.playSound('success');
+          } catch (error) {
+            console.log("Sound effect not available");
+          }
         } else {
           // Add response to terminal
           addTerminalOutput(response.text, response.type);

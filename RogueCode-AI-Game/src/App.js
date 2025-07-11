@@ -41,13 +41,8 @@ function App() {
       const loadingTimer = setTimeout(() => {
         setIsLoading(false);
         
-        // Play ambient music when loading completes
-        try {
-          soundManager.playMusic('ambient');
-          console.log("Started playing ambient music");
-        } catch (error) {
-          console.error("Failed to play ambient music:", error);
-        }
+        // Don't play ambient music automatically - wait for user to enable it
+        console.log("Loading complete, music will start when user enables it");
       }, 2000);
       
       return () => {

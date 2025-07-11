@@ -144,6 +144,15 @@ const processCommand = async (command) => {
       case 'analyze':
         return await handleAnalyzeCommand(args, flags);
         
+      case 'reset':
+        return handleResetCommand(args);
+        
+      case 'fix':
+        return handleFixCommand(args);
+        
+      case 'debug':
+        return handleDebugCommand(args);
+        
       default:
         return {
           text: `Command not recognized: ${action}. Type 'help' for available commands.`,
@@ -307,6 +316,58 @@ Note: Missions provide credits, XP, and reputation rewards upon completion.`,
           type: 'info'
         };
         
+      case 'reset':
+        return {
+          text: `
+reset - Reset game progress or settings
+Usage: reset [option]
+
+Available options:
+  stats    - Reset player statistics to default values
+  all      - Reset entire game state (all progress will be lost)
+
+Examples:
+  reset stats   - Reset player level, XP, credits, and reputation
+  reset all     - Complete game reset (missions, targets, stats, etc.)
+
+Warning: This action cannot be undone.`,
+          type: 'info'
+        };
+        
+      case 'fix':
+        return {
+          text: `
+fix - Fix inconsistent game state
+Usage: fix [option]
+
+Available options:
+  stats    - Fix player statistics to be consistent with your progress
+
+Examples:
+  fix stats   - Recalculate player level based on accumulated XP
+
+This command will adjust your stats to ensure they are consistent with your progress.`,
+          type: 'info'
+        };
+        
+      case 'debug':
+        return {
+          text: `
+debug - Show debug information
+Usage: debug [option]
+
+Available options:
+  xp      - Show detailed XP calculation information
+  state   - Show current game state information
+
+Examples:
+  debug xp     - Display XP calculation details
+  debug state  - Show overview of game state
+
+This command provides technical information to help diagnose issues.`,
+          type: 'info'
+        };
+        
       default:
         return {
           text: `No help available for '${command}'. Type 'help' for a list of commands.`,
@@ -336,6 +397,9 @@ hack       - Attempt to hack a target
 decrypt    - Decrypt encrypted data
 analyze    - Analyze data or systems
 test       - Test API connections and services
+reset      - Reset game progress or settings
+fix        - Fix inconsistent game state
+debug      - Show debug information
 
 Type 'help [command]' for more information on a specific command.`,
     type: 'info'
@@ -360,12 +424,34 @@ const handleStatusCommand = () => {
   try {
     if (memoryService && typeof memoryService.getPlayerData === 'function') {
       const player = memoryService.getPlayerData();
-      playerStats = `
+      
+      // Fix player stats if they're inconsistent
+      if (player.xp >= player.xpToNextLevel) {
+        console.log('Fixing inconsistent player stats...');
+        // Reset player stats to consistent values
+        memoryService.updatePlayerData({
+          level: 1,
+          xp: 0,
+          xpToNextLevel: 100,
+          credits: 1000,
+          reputation: 0
+        });
+        
+        playerStats = `
+Player Stats:
+- Level: 1
+- XP: 0/100
+- Credits: 1000
+- Reputation: 0
+NOTE: Player stats have been reset due to inconsistency.`;
+      } else {
+        playerStats = `
 Player Stats:
 - Level: ${player.level || 1}
-- XP: ${player.xp || 0}/${player.xpToNextLevel || 1000}
+- XP: ${player.xp || 0}/${player.xpToNextLevel || 100}
 - Credits: ${player.credits || 0}
 - Reputation: ${player.reputation || 0}`;
+      }
     }
   } catch (error) {
     console.error('Error getting player data:', error);
@@ -1298,21 +1384,63 @@ const handleHackCommand = async (args, flags) => {
     
     // Update player stats if memory service is available
     try {
-      if (memoryService && typeof memoryService.updatePlayerData === 'function') {
+      if (memoryService && typeof memoryService.getPlayerData === 'function') {
+        // Get current player data
         const player = memoryService.getPlayerData();
+        console.log('[HACK] Current player stats before hack:', player);
+        
+        // Calculate new values precisely
+        const oldCredits = player.credits;
+        const newCredits = oldCredits + creditsGained;
+        
+        // Update credits directly with exact value
         memoryService.updatePlayerData({
-          credits: player.credits + creditsGained
+          credits: newCredits
         });
-        memoryService.addPlayerXP(xpGained);
+        
+        // Store the pre-hack XP for logging
+        const oldXp = player.xp;
+        const oldXpToNextLevel = player.xpToNextLevel;
+        const oldLevel = player.level;
+        
+        // Add XP and handle level-ups
+        const xpResult = memoryService.addPlayerXP(xpGained);
+        console.log(`[HACK] Player stats after hack: Credits ${oldCredits} -> ${newCredits}, XP ${oldXp}/${oldXpToNextLevel} -> ${xpResult.xp}/${xpResult.xpToNextLevel}, Level ${oldLevel} -> ${xpResult.level}`);
+        
+        // Mark target as hacked in memory
+        const targetData = memoryService.getTarget(target) || {};
+        memoryService.addTarget({
+          ...targetData,
+          id: target,
+          name: target,
+          hacked: true,
+          hackedAt: new Date().toISOString()
+        });
+        
+        // Add level up message if player leveled up
+        let levelUpText = '';
+        if (xpResult.leveledUp) {
+          levelUpText = `\n\nLEVEL UP! You are now level ${xpResult.level}!`;
+        }
+        
+        // Format the XP change correctly
+        let xpChangeText;
+        if (xpResult.leveledUp) {
+          // If leveled up, show the transition through levels
+          xpChangeText = `${oldXp}/${oldXpToNextLevel} → ${xpResult.xp}/${xpResult.xpToNextLevel}`;
+        } else {
+          // If no level up, show simple addition
+          xpChangeText = `${oldXp}/${oldXpToNextLevel} → ${xpResult.xp}/${oldXpToNextLevel}`;
+        }
+        
+        rewardsText = `\nRewards:
+- Credits: +${creditsGained} (${oldCredits} → ${newCredits})
+- XP: +${xpGained} (${xpChangeText})
+- Access to ${target} system${levelUpText}`;
       }
     } catch (error) {
-      console.error('Error updating player stats:', error);
+      console.error('[HACK] Error updating player stats:', error);
     }
-    
-    rewardsText = `\nRewards:
-- Credits: +${creditsGained}
-- XP: +${xpGained}
-- Access to ${target} system`;
 
     // Add target-specific rewards
     if (targetInfo) {
@@ -1390,6 +1518,264 @@ Decryption complete.`,
     type: 'success',
     action: 'DECRYPT_SUCCESS',
     target
+  };
+};
+
+/**
+ * Handle the debug command
+ * @param {Array} args - Command arguments
+ * @returns {object} Response object
+ */
+const handleDebugCommand = (args) => {
+  if (args.length > 0 && args[0] === 'xp') {
+    try {
+      // Get current player data
+      if (memoryService && typeof memoryService.getPlayerData === 'function') {
+        const player = memoryService.getPlayerData();
+        
+        // Calculate total XP earned
+        let totalXp = 0;
+        let xpToNextLevel = 100; // Base XP for level 1
+        
+        // Add XP from completed levels
+        for (let i = 1; i < player.level; i++) {
+          totalXp += xpToNextLevel;
+          xpToNextLevel = Math.floor(xpToNextLevel * 1.5);
+        }
+        
+        // Add current level's XP
+        totalXp += player.xp;
+        
+        return {
+          text: `XP Debug Information:
+- Current Level: ${player.level}
+- Current XP: ${player.xp}/${player.xpToNextLevel}
+- Total XP Earned: ${totalXp}
+- XP Required for Next Level: ${player.xpToNextLevel}
+- XP Required for Level ${player.level + 1}: ${player.xpToNextLevel}
+- XP Required for Level ${player.level + 2}: ${Math.floor(player.xpToNextLevel * 1.5)}
+
+This information can help diagnose XP calculation issues.`,
+          type: 'info'
+        };
+      }
+    } catch (error) {
+      console.error('Error in debug command:', error);
+      return {
+        text: `Error running debug command: ${error.message}`,
+        type: 'error'
+      };
+    }
+  } else if (args.length > 0 && args[0] === 'state') {
+    try {
+      // Get current game state
+      if (memoryService) {
+        const player = memoryService.getPlayerData();
+        const missions = memoryService.getMissions();
+        const targets = memoryService.getAllTargets();
+        const viruses = memoryService.getAllViruses();
+        
+        return {
+          text: `Game State Debug Information:
+          
+Player:
+- Level: ${player.level}
+- XP: ${player.xp}/${player.xpToNextLevel}
+- Credits: ${player.credits}
+- Reputation: ${player.reputation}
+
+Missions: ${missions.length} total
+- Active: ${missions.filter(m => m.status === 'active').length}
+- Completed: ${missions.filter(m => m.status === 'completed').length}
+- Available: ${missions.filter(m => m.status === 'available').length}
+
+Targets: ${Object.keys(targets).length} total
+- Hacked: ${Object.values(targets).filter(t => t.hacked).length}
+
+Viruses: ${Object.keys(viruses).length} total
+
+This information shows the current state of your game.`,
+          type: 'info'
+        };
+      }
+    } catch (error) {
+      console.error('Error in debug command:', error);
+      return {
+        text: `Error running debug command: ${error.message}`,
+        type: 'error'
+      };
+    }
+  }
+  
+  return {
+    text: `Usage: debug [option]
+Available options:
+- xp: Show detailed XP calculation information
+- state: Show current game state information`,
+    type: 'info'
+  };
+};
+
+/**
+ * Handle the fix command
+ * @param {Array} args - Command arguments
+ * @returns {object} Response object
+ */
+const handleFixCommand = (args) => {
+  if (args.length > 0 && args[0] === 'stats') {
+    try {
+      // Get current player data
+      if (memoryService && typeof memoryService.getPlayerData === 'function') {
+        const player = memoryService.getPlayerData();
+        console.log('[FIX] Current player stats before fix:', player);
+        
+        // Store original values for reporting
+        const originalLevel = player.level;
+        const originalXp = player.xp;
+        const originalXpToNextLevel = player.xpToNextLevel;
+        const originalCredits = player.credits;
+        
+        // Calculate correct level based on XP
+        let totalXp = 0;
+        let xp = player.xp;
+        let level = player.level;
+        let xpToNextLevel = 100; // Base XP for level 1
+        
+        // Calculate total XP based on current level and remaining XP
+        for (let i = 1; i < level; i++) {
+          totalXp += xpToNextLevel;
+          xpToNextLevel = Math.floor(xpToNextLevel * 1.5);
+        }
+        totalXp += xp;
+        
+        console.log(`[FIX] Calculated total XP: ${totalXp}`);
+        
+        // Reset and recalculate level based on total XP
+        level = 1;
+        xp = totalXp;
+        xpToNextLevel = 100;
+        
+        // Process level-ups based on accumulated XP
+        while (xp >= xpToNextLevel) {
+          level += 1;
+          xp -= xpToNextLevel;
+          xpToNextLevel = Math.floor(xpToNextLevel * 1.5);
+        }
+        
+        // Update player stats with corrected values
+        memoryService.updatePlayerData({
+          level: level,
+          xp: xp,
+          xpToNextLevel: xpToNextLevel
+        });
+        
+        const fixedPlayer = memoryService.getPlayerData();
+        console.log('[FIX] Player stats after fix:', fixedPlayer);
+        
+        return {
+          text: `Player stats have been fixed:
+- Level: ${originalLevel} → ${fixedPlayer.level}
+- XP: ${originalXp}/${originalXpToNextLevel} → ${fixedPlayer.xp}/${fixedPlayer.xpToNextLevel}
+- Credits: ${fixedPlayer.credits}
+- Reputation: ${fixedPlayer.reputation}
+
+Your stats have been adjusted to be consistent with your progress.`,
+          type: 'success',
+          action: 'FIX_STATS'
+        };
+      }
+    } catch (error) {
+      console.error('[FIX] Error fixing player stats:', error);
+      return {
+        text: `Error fixing player stats: ${error.message}`,
+        type: 'error'
+      };
+    }
+  }
+  
+  return {
+    text: `Usage: fix [option]
+Available options:
+- stats: Fix player statistics to be consistent with your progress`,
+    type: 'info'
+  };
+};
+
+/**
+ * Handle the reset command
+ * @param {Array} args - Command arguments
+ * @returns {object} Response object
+ */
+const handleResetCommand = (args) => {
+  if (args.length > 0 && args[0] === 'stats') {
+    try {
+      // Reset player stats
+      if (memoryService && typeof memoryService.updatePlayerData === 'function') {
+        // Get current credits for logging
+        const currentPlayer = memoryService.getPlayerData();
+        console.log('Player stats before reset:', currentPlayer);
+        
+        // Reset to default values
+        memoryService.updatePlayerData({
+          level: 1,
+          xp: 0,
+          xpToNextLevel: 100,
+          credits: 500,  // Changed from 1000 to 500 to match your starting value
+          reputation: 0
+        });
+        
+        const resetPlayer = memoryService.getPlayerData();
+        console.log('Player stats after reset:', resetPlayer);
+        
+        return {
+          text: `Player stats have been reset to default values:
+- Level: 1
+- XP: 0/100
+- Credits: 500
+- Reputation: 0
+
+Your game progress has been reset.`,
+          type: 'success',
+          action: 'RESET_STATS'
+        };
+      }
+    } catch (error) {
+      console.error('Error resetting player stats:', error);
+      return {
+        text: `Error resetting player stats: ${error.message}`,
+        type: 'error'
+      };
+    }
+  } else if (args.length > 0 && args[0] === 'all') {
+    try {
+      // Reset entire game state
+      if (memoryService && typeof memoryService.resetMemory === 'function') {
+        memoryService.resetMemory();
+        
+        return {
+          text: `Complete game reset performed.
+All progress, missions, targets, and player stats have been reset to default values.
+
+Your game has been reset to its initial state.`,
+          type: 'success',
+          action: 'RESET_ALL'
+        };
+      }
+    } catch (error) {
+      console.error('Error performing complete reset:', error);
+      return {
+        text: `Error performing complete reset: ${error.message}`,
+        type: 'error'
+      };
+    }
+  }
+  
+  return {
+    text: `Usage: reset [option]
+Available options:
+- stats: Reset player statistics to default values
+- all: Reset entire game state (all progress will be lost)`,
+    type: 'info'
   };
 };
 
