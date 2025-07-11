@@ -1,4 +1,4 @@
-# RogueCode: AI Hacke Adventure Game
+# RogueCode: AI Hacker Adventure Game
 
 An immersive cyberpunk hacking simulation game built with React.js and AI integration.
 
