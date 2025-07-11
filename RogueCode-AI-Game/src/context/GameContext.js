@@ -55,6 +55,7 @@ export const GameProvider = ({ children }) => {
     showMissionPopup: false,
     showAlertBox: false,
     showHelpPanel: false,
+    showSettingsPanel: false,
     alertMessage: '',
     alertType: 'info',
   });
@@ -275,6 +276,16 @@ export const GameProvider = ({ children }) => {
     // Play UI toggle sound
     soundManager.playSound('uiToggle');
   };
+  
+  const toggleSettingsPanel = () => {
+    setUiState(prev => ({
+      ...prev,
+      showSettingsPanel: !prev.showSettingsPanel,
+    }));
+    
+    // Play UI toggle sound
+    soundManager.playSound('uiToggle');
+  };
 
   // Update game settings
   const updateGameSettings = (settings) => {
@@ -286,12 +297,25 @@ export const GameProvider = ({ children }) => {
     // Update sound manager volume
     if (settings.volume !== undefined) {
       soundManager.setVolume(settings.volume);
+      soundManager.setMusicVolume(settings.volume);
     }
     
-    // Toggle sound
+    // Toggle sound effects
     if (settings.soundEnabled !== undefined) {
-      if (!settings.soundEnabled) {
+      if (settings.soundEnabled !== gameSettings.soundEnabled) {
         soundManager.toggleMute();
+      }
+    }
+    
+    // Toggle music
+    if (settings.musicEnabled !== undefined) {
+      if (settings.musicEnabled !== gameSettings.musicEnabled) {
+        soundManager.toggleMusicMute();
+        
+        // If enabling music and no music is playing, start it
+        if (settings.musicEnabled && !gameSettings.musicEnabled) {
+          soundManager.playMusic('ambient');
+        }
       }
     }
   };
@@ -364,6 +388,7 @@ export const GameProvider = ({ children }) => {
       toggleSkillTree,
       toggleInventory,
       toggleHelpPanel,
+      toggleSettingsPanel,
       closeAlertBox,
       updateGameSettings,
     }}>

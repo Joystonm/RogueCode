@@ -15,7 +15,8 @@ const CommandInput = () => {
     terminalState,
     setTerminalProcessing,
     gameSettings,
-    toggleHelpPanel
+    toggleHelpPanel,
+    toggleSettingsPanel
   } = useGameContext();
 
   // Focus input on mount and when terminal is clicked
@@ -69,6 +70,11 @@ const CommandInput = () => {
         } else if (response.action === 'OPEN_HELP_PANEL') {
           // Open help panel
           toggleHelpPanel();
+          // Add response to terminal
+          addTerminalOutput(response.text, response.type);
+        } else if (response.action === 'OPEN_SETTINGS_PANEL') {
+          // Open settings panel
+          toggleSettingsPanel();
           // Add response to terminal
           addTerminalOutput(response.text, response.type);
         } else {

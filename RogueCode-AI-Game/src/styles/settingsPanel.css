@@ -1,0 +1,236 @@
+.settings-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 600px;
+  height: 80%;
+  max-height: 700px;
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 1px solid #444;
+  border-radius: 5px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  color: #ddd;
+  font-family: 'Courier New', monospace;
+  animation: fadeIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #444;
+  background-color: rgba(30, 30, 30, 0.9);
+}
+
+.settings-header h2 {
+  margin: 0;
+  color: #33ff33;
+  text-shadow: 0 0 5px rgba(51, 255, 51, 0.4);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #ddd;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 5px;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: #ff3333;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+
+.settings-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #333;
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  color: #33ff33;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.setting-item > span {
+  margin-bottom: 8px;
+}
+
+/* Toggle Switch */
+.toggle-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 24px;
+  background-color: #333;
+  border-radius: 12px;
+  transition: background-color 0.3s;
+}
+
+.toggle-switch.active {
+  background-color: #33ff33;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background-color: #ddd;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggle-switch.active .toggle-slider {
+  transform: translateX(26px);
+}
+
+/* Sliders */
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #333;
+  outline: none;
+  margin-top: 8px;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #33ff33;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(51, 255, 51, 0.4);
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #33ff33;
+  cursor: pointer;
+  box-shadow: 0 0 5px rgba(51, 255, 51, 0.4);
+  border: none;
+}
+
+/* Theme Options */
+.theme-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.theme-option {
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #444;
+  transition: all 0.2s;
+}
+
+.theme-option.active {
+  border-color: #ddd;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.theme-option.green {
+  background-color: rgba(0, 50, 0, 0.5);
+  color: #33ff33;
+}
+
+.theme-option.amber {
+  background-color: rgba(50, 30, 0, 0.5);
+  color: #ffb000;
+}
+
+.theme-option.blue {
+  background-color: rgba(0, 30, 50, 0.5);
+  color: #00ccff;
+}
+
+/* Reset Button */
+.reset-button {
+  background-color: rgba(80, 0, 0, 0.5);
+  color: #ff3333;
+  border: 1px solid #ff3333;
+  border-radius: 4px;
+  padding: 10px 15px;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-button:hover {
+  background-color: rgba(120, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+}
+
+.settings-footer {
+  padding: 10px 20px;
+  border-top: 1px solid #444;
+  background-color: rgba(30, 30, 30, 0.7);
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Scrollbar styling */
+.settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

@@ -6,6 +6,7 @@ import AlertBox from './components/Popups/AlertBox';
 import SkillTree from './components/Popups/SkillTree';
 import Inventory from './components/Popups/Inventory';
 import HelpPanel from './components/HelpPanel';
+import SettingsPanel from './components/SettingsPanel';
 import { GameProvider, useGameContext } from './context/GameContext';
 import soundManager from './utils/soundManager';
 import { memoryService } from './services';
@@ -152,7 +153,7 @@ const LoadingScreen = () => {
 
 // Main game screen component
 const GameScreen = () => {
-  const { uiState, toggleHelpPanel } = useGameContext();
+  const { uiState, toggleHelpPanel, toggleSettingsPanel } = useGameContext();
   
   // Sample mission for demonstration
   const sampleMission = {
@@ -171,22 +172,29 @@ const GameScreen = () => {
   // Add keyboard shortcut for help (F1 or H key)
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // F1 or Ctrl+H for help
       if (e.key === 'F1' || (e.key === 'h' && e.ctrlKey)) {
         e.preventDefault();
         toggleHelpPanel();
+      }
+      
+      // S or Ctrl+S for settings
+      if (e.key === 's' && e.ctrlKey) {
+        e.preventDefault();
+        toggleSettingsPanel();
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleHelpPanel]);
+  }, [toggleHelpPanel, toggleSettingsPanel]);
 
   return (
     <div className="app">
       <header className="app-header">
         <div className="app-title">RogueCode: AI Hacker Adventure</div>
         <div className="app-controls">
-          <button className="control-button">Settings</button>
+          <button className="control-button" onClick={toggleSettingsPanel} title="Settings (Ctrl+S)">Settings</button>
           <button className="control-button" onClick={toggleHelpPanel} title="Help (F1 or Ctrl+H)">Help</button>
         </div>
       </header>
@@ -231,6 +239,11 @@ const GameScreen = () => {
       {/* Help Panel */}
       {uiState.showHelpPanel && (
         <HelpPanel onClose={toggleHelpPanel} />
+      )}
+      
+      {/* Settings Panel */}
+      {uiState.showSettingsPanel && (
+        <SettingsPanel onClose={toggleSettingsPanel} />
       )}
     </div>
   );

@@ -96,6 +96,13 @@ const processCommand = async (command) => {
       case 'upgrade':
         return await handleUpgradeCommand(args, flags);
         
+      case 'settings':
+        return {
+          text: 'Opening settings panel...',
+          type: 'system',
+          action: 'OPEN_SETTINGS_PANEL'
+        };
+        
       case 'skills':
         return { 
           text: 'Opening skill tree...', 
